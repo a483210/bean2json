@@ -1,0 +1,48 @@
+<idea-plugin>
+    <id>com.xy.bean2json</id>
+    <name>JavaBean to Json</name>
+    <version>1.0.0</version>
+    <vendor email="a483210@163.com" url="https://github.com/linsage">a483210</vendor>
+    <description><![CDATA[
+      <a href="https://github.com/linsage/java2json">GitHub</a> |
+      <a href="https://www.paypal.me/linsage">Donate with PayPal</a> |
+      <br/>
+      <br/>
+      <p>A simple plugin for converting Java bean to JSON</p>
+      <p>When you post json request using Postman :)</p>
+    ]]></description>
+
+    <change-notes><![CDATA[
+         <li>1.0.0 - First revision.</li>
+    ]]>
+    </change-notes>
+    <idea-version since-build="203.5981.155"/>
+
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.modules.java</depends>
+    <!--    <depends>com.intellij.modules.platform</depends>-->
+    <!--    <depends>org.jetbrains.kotlin</depends>-->
+
+    <actions>
+        <group id="com.xy.bean2json.Bean2Json" text="ConvertToJson" popup="true"
+               icon="/icons/convert.svg"
+               class="com.xy.bean2json.action.ConvertGroupAction">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <action class="com.xy.bean2json.action.ConvertToJsonAction" id="toLess" text="ToLess"/>
+            <action class="com.xy.bean2json.action.ConvertToJsonCommentAction" id="toComment"
+                    text="ToComment"/>
+            <action class="com.xy.bean2json.action.ConvertToJsonRearAction" id="toRear"
+                    text="ToRear">
+                <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt 2"/>
+            </action>
+        </group>
+
+        <group id="com.xy.bean2json.Bean2JsonMenu" text="Bean2Json" popup="true"
+               icon="/icons/convert.svg">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action class="com.xy.bean2json.menu.DefaultAction" id="com.xy.bean2json.DefaultValue" text="DefaultValue"/>
+            <action class="com.xy.bean2json.menu.WriteTypeAction" id="com.xy.bean2json.WriteType" text="TypeValue"/>
+            <action class="com.xy.bean2json.menu.MockDataAction" id="com.xy.bean2json.MockData" text="MockData"/>
+        </group>
+    </actions>
+</idea-plugin>
