@@ -8,15 +8,15 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 
 /**
- * JavaUtils
+ * JsonUtils
  *
  * @author Created by gold on 2020/3/4 16:20
  */
-public final class JavaUtils {
+public final class JsonUtils {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    private JavaUtils() {
+    private JsonUtils() {
     }
 
     /**

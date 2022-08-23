@@ -1,16 +1,17 @@
 package com.xy.bean2json.utils;
 
 import com.github.jsonzou.jmockdata.JMockData;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.xy.bean2json.manager.ParamsManager;
-
 import com.xy.bean2json.type.DataType;
 import org.jetbrains.annotations.NonNls;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,7 +28,6 @@ import java.util.Map;
 public final class MockDataUtils {
 
     private static final String PATTERN = "yyyy-MM-dd HH:mm:ss";
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat(PATTERN);
     @NonNls
     private static final Map<String, Object> NORMAL_TYPES = new HashMap<>();
 
@@ -43,7 +43,7 @@ public final class MockDataUtils {
         NORMAL_TYPES.put("String", "");
         NORMAL_TYPES.put("BigDecimal", 0.0);
         NORMAL_TYPES.put("BigInteger", 0.0);
-        NORMAL_TYPES.put("Date", DATE_FORMAT.format(new Date()));
+        NORMAL_TYPES.put("Date", new SimpleDateFormat(PATTERN).format(new Date()));
         NORMAL_TYPES.put("Timestamp", System.currentTimeMillis());
         NORMAL_TYPES.put("LocalDate", LocalDate.now().toString());
         NORMAL_TYPES.put("LocalTime", LocalTime.now().toString());
@@ -63,8 +63,13 @@ public final class MockDataUtils {
         return NORMAL_TYPES.containsKey(typeName);
     }
 
-    public static Object getNormalTypeValue(String fieldTypeName) {
+    public static Object getNormalTypeValue(PsiField field, String fieldTypeName) {
         if (ParamsManager.get().isDataType(DataType.DEFAULT_VALUE)) {
+            PsiExpression initExpression = field.getInitializer();
+            if (initExpression instanceof PsiLiteralExpression) {
+                return ((PsiLiteralExpression) initExpression).getValue();
+            }
+
             return NORMAL_TYPES.get(fieldTypeName);
         } else if (ParamsManager.get().isDataType(DataType.WRITE_TYPE)) {
             return fieldTypeName;
@@ -104,8 +109,13 @@ public final class MockDataUtils {
      * @param type 类型
      * @return data
      */
-    public static Object getPrimitiveValue(PsiType type) {
+    public static Object getPrimitiveValue(PsiField field, PsiType type) {
         if (ParamsManager.get().isDataType(DataType.DEFAULT_VALUE)) {
+            PsiExpression initExpression = field.getInitializer();
+            if (initExpression instanceof PsiLiteralExpression) {
+                return ((PsiLiteralExpression) initExpression).getValue();
+            }
+
             return PsiTypesUtil.getDefaultValue(type);
         } else if (ParamsManager.get().isDataType(DataType.WRITE_TYPE)) {
             return type.getCanonicalText();
@@ -132,5 +142,4 @@ public final class MockDataUtils {
                 return PsiTypesUtil.getDefaultValue(type);
         }
     }
-
 }

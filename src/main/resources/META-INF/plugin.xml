@@ -20,8 +20,8 @@
 
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.modules.java</depends>
-    <!--    <depends>com.intellij.modules.platform</depends>-->
-    <!--    <depends>org.jetbrains.kotlin</depends>-->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>org.jetbrains.kotlin</depends>
 
     <actions>
         <group id="com.xy.bean2json.Bean2Json" text="ConvertToJson" popup="true"

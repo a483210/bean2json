@@ -6,10 +6,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.xy.bean2json.error.ConvertException;
-import com.xy.bean2json.utils.PluginUtils;
 
 /**
  * BaseAction
@@ -39,10 +37,9 @@ public abstract class BaseAction extends AnAction {
         Project project = editor.getProject();
 
         try {
-            actionPerformed(e, editor, psiFile);
+            String canonicalText = actionPerformed(e, editor, psiFile);
 
-            PsiClass selectedClass = PluginUtils.parseForFile(editor, psiFile);
-            String message = "Convert " + selectedClass.getName() + " to JSON success, copied to clipboard.";
+            String message = "Convert " + canonicalText + " to JSON success, copied to clipboard.";
 
             sendNotice(project, message);
         } catch (Throwable t) {
@@ -56,7 +53,7 @@ public abstract class BaseAction extends AnAction {
         }
     }
 
-    protected abstract void actionPerformed(AnActionEvent e, Editor editor, PsiFile psiFile);
+    protected abstract String actionPerformed(AnActionEvent e, Editor editor, PsiFile psiFile);
 
     /**
      * 发送通知

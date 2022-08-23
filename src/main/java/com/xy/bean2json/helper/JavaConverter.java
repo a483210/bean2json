@@ -1,21 +1,25 @@
 package com.xy.bean2json.helper;
 
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
-import com.xy.bean2json.utils.JavaUtils;
+import com.xy.bean2json.utils.JsonUtils;
 import com.xy.bean2json.utils.MockDataUtils;
 import com.xy.bean2json.utils.PluginUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.asJava.elements.KtLightFieldForSourceDeclarationSupport;
+import org.jetbrains.kotlin.kdoc.psi.api.KDoc;
+import org.jetbrains.kotlin.psi.KtDeclaration;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.xy.bean2json.utils.MockDataUtils.getNormalTypeValue;
-import static com.xy.bean2json.utils.MockDataUtils.getPrimitiveValue;
 
 /**
  * JavaConverter
@@ -24,16 +28,24 @@ import static com.xy.bean2json.utils.MockDataUtils.getPrimitiveValue;
  */
 public class JavaConverter {
 
-    public static Pair<Map<String, Object>, Map<String, Object>> convert(
-            @NotNull Set<PsiClass> parsedTypes, @NotNull PsiClass psiClass) {
-        return new JavaConverter(parsedTypes).convert(psiClass);
+    protected static Pair<Map<String, Object>, Map<String, Object>> convert(
+            @NotNull Project project,
+            @NotNull PsiFile psiFile,
+            @NotNull Map<PsiType, PsiTypeCache> parsedTypes,
+            @NotNull PsiType psiType) {
+        return new JavaConverter(project, psiFile, parsedTypes).convert(psiType);
     }
 
-    private final Set<PsiClass> parsedTypes;
+    private final Project project;
+    private final PsiFile psiFile;
+    private final Map<PsiType, PsiTypeCache> parsedTypes;
+
     private final Map<String, Object> classes;
     private final Map<String, Object> comments;
 
-    private JavaConverter(Set<PsiClass> parsedTypes) {
+    private JavaConverter(Project project, PsiFile psiFile, Map<PsiType, PsiTypeCache> parsedTypes) {
+        this.project = project;
+        this.psiFile = psiFile;
         this.parsedTypes = parsedTypes;
 
         this.classes = new LinkedHashMap<>();
@@ -56,14 +68,25 @@ public class JavaConverter {
         comments.put(field.getName(), comment);
     }
 
-    private Pair<Map<String, Object>, Map<String, Object>> convert(PsiClass psiClass) {
+    private Pair<Map<String, Object>, Map<String, Object>> convert(PsiType psiType) {
+        if (parsedTypes.containsKey(psiType)) {
+            return parsedTypes.get(psiType).resolve();
+        }
+
         //add to parsedTypes
-        parsedTypes.add(psiClass);
+        parsedTypes.put(psiType, new PsiTypeCache(classes, comments));
+
+        PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(psiType);
+        if (psiClass == null) {
+            return Pair.create(classes, comments);
+        }
 
         for (PsiField field : psiClass.getAllFields()) {
+            //noinspection UnstableApiUsage
             if (field.hasModifier(JvmModifier.STATIC)) {
                 continue;
             }
+            //noinspection UnstableApiUsage
             if (!field.hasModifier(JvmModifier.PUBLIC)) {
                 PsiMethod getMethod = PluginUtils.generateGetMethod(field);
 
@@ -98,9 +121,18 @@ public class JavaConverter {
                         handlePsiEnumClass(field, enumClass);
                     } else {
                         //class type
-                        PsiClass classInClass = PsiUtil.resolveClassInType(type);
 
-                        handlePsiObjectClass(field, classInClass);
+                        if (enumClass instanceof PsiTypeParameter
+                                && psiType instanceof PsiClassReferenceType) {
+                            int genericIndex = ((PsiTypeParameter) enumClass).getIndex();
+
+                            PsiType[] parameters = ((PsiClassReferenceType) psiType).getParameters();
+                            if (genericIndex < parameters.length) {
+                                type = parameters[genericIndex];
+                            }
+                        }
+
+                        handlePsiObjectClass(field, type);
                     }
                 }
             }
@@ -110,12 +142,12 @@ public class JavaConverter {
     }
 
     private void handlePsiPrimitiveType(PsiField field, PsiPrimitiveType type) {
-        putClass(field, getPrimitiveValue(type));
+        putClass(field, MockDataUtils.getPrimitiveValue(field, type));
         putComment(field, getComment(field));
     }
 
     private void handlePsiNormalType(PsiField field, String fieldTypeName) {
-        putClass(field, getNormalTypeValue(fieldTypeName));
+        putClass(field, MockDataUtils.getNormalTypeValue(field, fieldTypeName));
         putComment(field, getComment(field));
     }
 
@@ -125,14 +157,13 @@ public class JavaConverter {
 
         String deepTypeName = deepType.getPresentableText();
         if (deepType instanceof PsiPrimitiveType) {
-            list.add(MockDataUtils.getPrimitiveValue(deepType));
+            list.add(MockDataUtils.getPrimitiveValue(field, deepType));
             putComment(field);
         } else if (MockDataUtils.isNormalType(deepTypeName)) {
-            list.add(MockDataUtils.getNormalTypeValue(deepTypeName));
+            list.add(MockDataUtils.getNormalTypeValue(field, deepTypeName));
             putComment(field);
         } else {
-            PsiClass listClass = PsiUtil.resolveClassInType(deepType);
-            list.add(handlePsiGeneralClass(field, listClass));
+            list.add(handlePsiGeneralClass(field, deepType));
         }
 
         putClass(field, list);
@@ -140,20 +171,18 @@ public class JavaConverter {
 
     private void handlePsiListType(PsiField field, PsiType type) {
         PsiType iterableType = PsiUtil.extractIterableTypeParameter(type, false);
-        PsiClass iterableClass = PsiUtil.resolveClassInClassTypeOnly(iterableType);
-
-        if (iterableClass == null) {
+        if (iterableType == null) {
             return;
         }
 
         List<Object> list = new ArrayList<>();
 
-        String classTypeName = iterableClass.getName();
+        String classTypeName = iterableType.getCanonicalText();
         if (MockDataUtils.isNormalType(classTypeName)) {
-            list.add(MockDataUtils.getNormalTypeValue(classTypeName));
+            list.add(MockDataUtils.getNormalTypeValue(field, classTypeName));
             putComment(field);
         } else {
-            list.add(handlePsiGeneralClass(field, iterableClass));
+            list.add(handlePsiGeneralClass(field, iterableType));
         }
 
         putClass(field, list);
@@ -173,20 +202,19 @@ public class JavaConverter {
             throw new IllegalStateException("map key unsupported types");
         }
 
-        Object keyDefParam = getNormalTypeValue(keyTypeName);
+        Object keyDefParam = getNormalTypeValue(field, keyTypeName);
         Object valueDefParam;
 
         if (MockDataUtils.isNormalType(valueTypeName)) {
-            valueDefParam = getNormalTypeValue(valueTypeName);
+            valueDefParam = getNormalTypeValue(field, valueTypeName);
             putComment(field);
         } else {
-            PsiClass classInType = PsiUtil.resolveClassInType(valueType);
-            boolean isSystemCls = isSystemClass(classInType);
+            boolean isSystemCls = isSystemClass(valueType);
             if (isSystemCls) {
                 valueDefParam = new Object();
                 putComment(field);
             } else {
-                valueDefParam = handlePsiGeneralClass(field, classInType);
+                valueDefParam = handlePsiGeneralClass(field, valueType);
             }
         }
 
@@ -195,7 +223,7 @@ public class JavaConverter {
 
     private void handlePsiEnumClass(PsiField field, PsiClass enumClass) {
         List<String> list = Arrays.stream(enumClass.getFields())
-                .filter(f -> f instanceof PsiEnumConstant)
+                .filter(PsiEnumConstant.class::isInstance)
                 .map(PsiField::getName)
                 .collect(Collectors.toList());
 
@@ -203,46 +231,45 @@ public class JavaConverter {
         putComment(field);
     }
 
-    private void handlePsiObjectClass(PsiField field, PsiClass classInClass) {
-        boolean isSystemCls = isSystemClass(classInClass);
+    private void handlePsiObjectClass(PsiField field, PsiType classInType) {
+        boolean isSystemCls = isSystemClass(classInType);
 
         //system class
         if (isSystemCls) {
             putClass(field, new Object());
             putComment(field);
         } else {
-            putClass(field, handlePsiGeneralClass(field, classInClass));
+            putClass(field, handlePsiGeneralClass(field, classInType));
         }
     }
 
-    private Map<String, Object> handlePsiGeneralClass(PsiField field, PsiClass generalClass) {
-        if (generalClass == null) {
-            return null;
+    private Map<String, Object> handlePsiGeneralClass(PsiField field, PsiType generalType) {
+        if (generalType == null) {
+            return Collections.emptyMap();
         }
 
-        if (parsedTypes.contains(generalClass)) {
-            putClass(field, new Object());
-            putComment(field);
-            return null;
-        } else {
-            Pair<Map<String, Object>, Map<String, Object>> pair = convert(parsedTypes, generalClass);
+        Pair<Map<String, Object>, Map<String, Object>> pair = convert(project, psiFile, parsedTypes, generalType);
 
-            mergeComment(pair.second, getComment(field));
-            putComment(field, pair.second);
+        mergeComment(pair.second, getComment(field));
+        putComment(field, pair.second);
 
-            return pair.first;
-        }
+        return pair.first;
     }
 
-    private static boolean isSystemClass(PsiClass classInType) {
+    private static boolean isSystemClass(PsiType classInType) {
         if (classInType == null) {
             return false;
         }
 
-        PsiFile file = classInType.getContainingFile();
+        PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(classInType);
+        if (psiClass == null) {
+            return false;
+        }
+
+        PsiFile file = psiClass.getContainingFile();
         if (file instanceof PsiJavaFile) {
             String packageName = ((PsiJavaFile) file).getPackageName();
-            return JavaUtils.isSystemClass(packageName);
+            return JsonUtils.isSystemClass(packageName);
         }
 
         return false;
@@ -256,17 +283,30 @@ public class JavaConverter {
         Map<String, Object> newMap = new LinkedHashMap<>(commentMap);
 
         commentMap.clear();
-        commentMap.put(ConvertToJsonHelper.KEY_COMMENT, comment);
+        commentMap.put(ClassResolver.KEY_COMMENT, comment);
         commentMap.putAll(newMap);
     }
 
     private static String getComment(PsiField field) {
-        PsiDocComment comment = field.getDocComment();
-        if (comment == null) {
-            return "";
+        String text = null;
+        if (PluginUtils.isKotlin(field)) {
+            PsiElement psiElement = field.getOriginalElement();
+            if (psiElement instanceof KtLightFieldForSourceDeclarationSupport) {
+                KtDeclaration ktDeclaration = ((KtLightFieldForSourceDeclarationSupport) field.getOriginalElement()).getKotlinOrigin();
+                if (ktDeclaration != null) {
+                    KDoc doc = ktDeclaration.getDocComment();
+                    if (doc != null) {
+                        text = doc.getText();
+                    }
+                }
+            }
+        } else {
+            PsiDocComment comment = field.getDocComment();
+            if (comment != null) {
+                text = comment.getText();
+            }
         }
 
-        String text = comment.getText();
         if (StringUtils.isEmpty(text)) {
             return "";
         }
@@ -281,5 +321,20 @@ public class JavaConverter {
         return comment.replaceAll(regex, "")
                 .replaceAll(regexSpace, " ")
                 .trim();
+    }
+
+    private static class PsiTypeCache {
+
+        final Map<String, Object> classes;
+        final Map<String, Object> comments;
+
+        private PsiTypeCache(Map<String, Object> classes, Map<String, Object> comments) {
+            this.classes = classes;
+            this.comments = comments;
+        }
+
+        private Pair<Map<String, Object>, Map<String, Object>> resolve() {
+            return Pair.create(classes, comments);
+        }
     }
 }

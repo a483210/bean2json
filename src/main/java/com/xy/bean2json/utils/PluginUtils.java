@@ -1,12 +1,12 @@
 package com.xy.bean2json.utils;
 
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-
-import javax.swing.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
+import org.jetbrains.kotlin.idea.KotlinFileType;
+import org.jetbrains.kotlin.idea.KotlinLanguage;
 
 /**
  * PluginUtils
@@ -17,18 +17,24 @@ public final class PluginUtils {
     private PluginUtils() {
     }
 
-    public static final Icon ICON_SELECTED = IconLoader.getIcon("/icons/selected1.png");
-
     /**
      * 解析文件
      *
-     * @param editor  编辑器
+     * @param project 项目
      * @param psiFile 文件
      * @return class
      */
-    public static PsiClass parseForFile(Editor editor, PsiFile psiFile) {
-        PsiElement referenceAt = psiFile.findElementAt(editor.getCaretModel().getOffset());
-        return (PsiClass) PsiTreeUtil.getContextOfType(referenceAt, new Class[]{PsiClass.class});
+    public static PsiType parsePsiFile(Project project, PsiFile psiFile) {
+        String className = psiFile.getName();
+        String shortClassName = className.substring(0, className.lastIndexOf("."));
+
+        PsiClass[] psiClasses = PsiShortNamesCache.getInstance(project)
+                .getClassesByName(shortClassName, GlobalSearchScope.allScope(project));
+        if (psiClasses.length == 0) {
+            throw new IllegalArgumentException("not found class");
+        }
+
+        return JavaPsiFacade.getElementFactory(project).createType(psiClasses[0]);
     }
 
     /**
@@ -59,5 +65,25 @@ public final class PluginUtils {
         }
 
         return methods[0];
+    }
+
+    /**
+     * 是kotlin类
+     *
+     * @param psiFile psi文件
+     * @return bool
+     */
+    public static boolean isKotlin(PsiFile psiFile) {
+        return psiFile.getFileType() instanceof KotlinFileType;
+    }
+
+    /**
+     * 是kotlin类
+     *
+     * @param psiField psi参数
+     * @return bool
+     */
+    public static boolean isKotlin(PsiField psiField) {
+        return psiField.getLanguage() instanceof KotlinLanguage;
     }
 }

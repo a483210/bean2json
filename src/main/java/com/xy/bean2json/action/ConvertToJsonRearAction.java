@@ -2,12 +2,13 @@ package com.xy.bean2json.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
 import com.xy.bean2json.base.BaseAction;
-import com.xy.bean2json.helper.ConvertToJsonHelper;
-import com.xy.bean2json.utils.JavaUtils;
+import com.xy.bean2json.helper.ClassResolver;
+import com.xy.bean2json.utils.JsonUtils;
 import com.xy.bean2json.utils.PluginUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -25,24 +26,26 @@ import java.util.Map;
  */
 public class ConvertToJsonRearAction extends BaseAction {
 
-    private final ConvertToJsonHelper helper = new ConvertToJsonHelper();
-
     @Override
-    protected void actionPerformed(AnActionEvent e, Editor editor, PsiFile psiFile) {
-        PsiClass selectedClass = PluginUtils.parseForFile(editor, psiFile);
+    protected String actionPerformed(AnActionEvent e, Editor editor, PsiFile psiFile) {
+        Project project = editor.getProject();
 
-        Pair<Map<String, Object>, Map<String, Object>> pair = helper.convert(selectedClass);
+        PsiType selectedType = PluginUtils.parsePsiFile(project, psiFile);
+
+        Pair<Map<String, Object>, Map<String, Object>> pair = ClassResolver.resolve(project, psiFile, selectedType);
 
         String json = mergeFiled(pair);
 
-        JavaUtils.copyToClipboard(json);
+        JsonUtils.copyToClipboard(json);
+
+        return psiFile.getName();
     }
 
     private String mergeFiled(Pair<Map<String, Object>, Map<String, Object>> pair) {
         Map<String, Object> classes = pair.first;
         Map<String, Object> comments = pair.second;
 
-        String json = JavaUtils.toJson(classes);
+        String json = JsonUtils.toJson(classes);
 
         try (ByteArrayInputStream arrayIs = new ByteArrayInputStream(json.getBytes());
              InputStreamReader inputSr = new InputStreamReader(arrayIs);
@@ -88,9 +91,10 @@ public class ConvertToJsonRearAction extends BaseAction {
                 }
 
                 if (comment instanceof Map) {
+                    //noinspection unchecked
                     Map<String, Object> map = (Map<String, Object>) comment;
 
-                    Object clsComment = map.get(ConvertToJsonHelper.KEY_COMMENT);
+                    Object clsComment = map.get(ClassResolver.KEY_COMMENT);
                     if (clsComment != null) {
                         builder.append(" // ")
                                 .append(clsComment);
@@ -108,6 +112,7 @@ public class ConvertToJsonRearAction extends BaseAction {
                 if (type != -1) {
                     Stack stack = new Stack();
                     stack.type = type;
+                    //noinspection unchecked
                     stack.map = comment instanceof Map ? (Map<String, Object>) comment : null;
 
                     stacks.add(stack);

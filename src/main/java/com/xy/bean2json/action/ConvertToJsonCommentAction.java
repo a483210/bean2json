@@ -2,11 +2,12 @@ package com.xy.bean2json.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiClass;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.xy.bean2json.helper.ConvertToJsonHelper;
+import com.intellij.psi.PsiType;
+import com.xy.bean2json.helper.ClassResolver;
 import com.xy.bean2json.base.BaseAction;
-import com.xy.bean2json.utils.JavaUtils;
+import com.xy.bean2json.utils.JsonUtils;
 import com.xy.bean2json.utils.PluginUtils;
 
 import java.util.Map;
@@ -18,14 +19,16 @@ import java.util.Map;
  */
 public class ConvertToJsonCommentAction extends BaseAction {
 
-    private final ConvertToJsonHelper helper = new ConvertToJsonHelper();
-
     @Override
-    protected void actionPerformed(AnActionEvent e, Editor editor, PsiFile psiFile) {
-        PsiClass selectedClass = PluginUtils.parseForFile(editor, psiFile);
+    protected String actionPerformed(AnActionEvent e, Editor editor, PsiFile psiFile) {
+        Project project = editor.getProject();
 
-        Map<String, Object> json = helper.convertComment(selectedClass);
+        PsiType selectedType = PluginUtils.parsePsiFile(project, psiFile);
 
-        JavaUtils.copyToClipboard(JavaUtils.toJson(json));
+        Map<String, Object> json = ClassResolver.resolveComment(project, psiFile, selectedType);
+
+        JsonUtils.copyToClipboard(JsonUtils.toJson(json));
+
+        return psiFile.getName();
     }
 }
