@@ -1,0 +1,23 @@
+ext {
+    ideaSourceDir = getLocalProperties('idea.source.dir')
+}
+
+String getLocalProperties(String key) {
+    return getLocalProperties(key, null)
+}
+
+String getLocalProperties(String key, String defValue) {
+    File file = rootProject.file('local.properties')
+    if (!file.exists()) {
+        return defValue
+    }
+
+    Properties properties = new Properties()
+    properties.load(file.newDataInputStream())
+
+    if (properties.containsKey(key)) {
+        return properties.getProperty(key)
+    }
+
+    return defValue
+}

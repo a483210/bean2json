@@ -10,14 +10,14 @@ import java.awt.datatransfer.StringSelection;
 /**
  * JsonUtils
  *
- * @author Created by gold on 2020/3/4 16:20
+ * @author Created by gold on 2022/8/25 11:17
+ * @since 1.0.0
  */
 public final class JsonUtils {
-
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-
     private JsonUtils() {
     }
+
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     /**
      * toJson
@@ -36,14 +36,5 @@ public final class JsonUtils {
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         StringSelection selection = new StringSelection(text);
         clipboard.setContents(selection, selection);
-    }
-
-    /**
-     * 是否为系统对象
-     *
-     * @param name 对象
-     */
-    public static boolean isSystemClass(String name) {
-        return name.startsWith("java.") || name.startsWith("javax.");
     }
 }

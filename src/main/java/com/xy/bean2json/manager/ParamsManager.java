@@ -25,7 +25,7 @@ public class ParamsManager {
     private ParamsManager() {
     }
 
-    private DataType dataType = DataType.MOCK_DATA;
+    private DataType dataType = DataType.DEFAULT_VALUE;
 
     public DataType getDataType() {
         return dataType;

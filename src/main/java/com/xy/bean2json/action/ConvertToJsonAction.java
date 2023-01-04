@@ -2,11 +2,10 @@ package com.xy.bean2json.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
-import com.xy.bean2json.helper.ClassResolver;
 import com.xy.bean2json.base.BaseAction;
+import com.xy.bean2json.helper.ClassResolver;
 import com.xy.bean2json.utils.JsonUtils;
 import com.xy.bean2json.utils.PluginUtils;
 
@@ -19,11 +18,9 @@ public class ConvertToJsonAction extends BaseAction {
 
     @Override
     protected String actionPerformed(AnActionEvent e, Editor editor, PsiFile psiFile) {
-        Project project = editor.getProject();
+        PsiType selectedType = PluginUtils.parsePsiFile(psiFile);
 
-        PsiType selectedType = PluginUtils.parsePsiFile(project, psiFile);
-
-        String json = ClassResolver.toJson(project, psiFile, selectedType);
+        String json = ClassResolver.toJsonField(psiFile, selectedType);
 
         JsonUtils.copyToClipboard(json);
 

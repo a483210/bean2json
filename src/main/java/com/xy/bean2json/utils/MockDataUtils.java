@@ -1,24 +1,21 @@
 package com.xy.bean2json.utils;
 
 import com.github.jsonzou.jmockdata.JMockData;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.xy.bean2json.manager.ParamsManager;
 import com.xy.bean2json.type.DataType;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * MockDataUtils
@@ -26,120 +23,168 @@ import java.util.Map;
  * @author Created by gold on 2020/3/11 11:30
  */
 public final class MockDataUtils {
-
-    private static final String PATTERN = "yyyy-MM-dd HH:mm:ss";
-    @NonNls
-    private static final Map<String, Object> NORMAL_TYPES = new HashMap<>();
-
-    static {
-        NORMAL_TYPES.put("Character", 'a');
-        NORMAL_TYPES.put("Boolean", false);
-        NORMAL_TYPES.put("Byte", 0);
-        NORMAL_TYPES.put("Short", (short) 0);
-        NORMAL_TYPES.put("Integer", 0);
-        NORMAL_TYPES.put("Long", 0L);
-        NORMAL_TYPES.put("Float", 0.0F);
-        NORMAL_TYPES.put("Double", 0.0D);
-        NORMAL_TYPES.put("String", "");
-        NORMAL_TYPES.put("BigDecimal", 0.0);
-        NORMAL_TYPES.put("BigInteger", 0.0);
-        NORMAL_TYPES.put("Date", new SimpleDateFormat(PATTERN).format(new Date()));
-        NORMAL_TYPES.put("Timestamp", System.currentTimeMillis());
-        NORMAL_TYPES.put("LocalDate", LocalDate.now().toString());
-        NORMAL_TYPES.put("LocalTime", LocalTime.now().toString());
-        NORMAL_TYPES.put("LocalDateTime", LocalDateTime.now().toString());
-    }
-
     private MockDataUtils() {
     }
 
-    /**
-     * 判断是否为基本对象
-     *
-     * @param typeName 类型名称
-     * @return bool
-     */
-    public static boolean isNormalType(String typeName) {
-        return NORMAL_TYPES.containsKey(typeName);
-    }
+    private static final String PATTERN = "yyyy-MM-dd HH:mm:ss";
 
-    public static Object getNormalTypeValue(PsiField field, String fieldTypeName) {
-        if (ParamsManager.get().isDataType(DataType.DEFAULT_VALUE)) {
-            PsiExpression initExpression = field.getInitializer();
-            if (initExpression instanceof PsiLiteralExpression) {
-                return ((PsiLiteralExpression) initExpression).getValue();
+    @Nullable
+    public static Object resolveInitValue(Class<?> javaType, PsiExpression initExpression) {
+        if (initExpression instanceof PsiLiteralExpression) {
+            return ((PsiLiteralExpression) initExpression).getValue();
+        } else if (initExpression instanceof PsiArrayInitializerExpression) {
+            PsiExpression[] psiExpressions = ((PsiArrayInitializerExpression) initExpression).getInitializers();
+
+            return resolveInitArrayValue(javaType, psiExpressions);
+        } else if (initExpression instanceof PsiExpressionList) {
+            PsiExpression[] psiExpressions = ((PsiExpressionList) initExpression).getExpressions();
+
+            return resolveInitArrayValue(javaType, psiExpressions);
+        } else if (initExpression instanceof PsiNewExpression) {
+            PsiNewExpression psiNewExpression = (PsiNewExpression) initExpression;
+
+            PsiArrayInitializerExpression psiArrayInitializerExpression = psiNewExpression.getArrayInitializer();
+            if (psiArrayInitializerExpression != null) {
+                return resolveInitValue(javaType, psiArrayInitializerExpression);
             }
 
-            return NORMAL_TYPES.get(fieldTypeName);
-        } else if (ParamsManager.get().isDataType(DataType.WRITE_TYPE)) {
-            return fieldTypeName;
+            PsiExpressionList psiExpressionList = psiNewExpression.getArgumentList();
+            if (psiExpressionList != null) {
+                return resolveInitArrayValue(javaType, psiExpressionList.getExpressions());
+            }
+
+            return null;
+        } else if (initExpression instanceof PsiMethodCallExpression) {
+            PsiMethodCallExpression psiMethodCallExpression = (PsiMethodCallExpression) initExpression;
+
+            PsiExpressionList psiExpressionList = psiMethodCallExpression.getArgumentList();
+
+            return resolveInitArrayValue(javaType, psiExpressionList.getExpressions());
         }
 
-        switch (fieldTypeName) {
-            case "Boolean":
-                return JMockData.mock(Boolean.class);
-            case "Character":
-                return JMockData.mock(Character.class);
-            case "Byte":
-                return JMockData.mock(Byte.class);
-            case "Short":
-                return JMockData.mock(Short.class);
-            case "Integer":
-                return JMockData.mock(Integer.class);
-            case "Long":
-                return JMockData.mock(Long.class);
-            case "Float":
-                return JMockData.mock(Float.class);
-            case "Double":
-                return JMockData.mock(Double.class);
-            case "String":
-                return JMockData.mock(String.class);
-            case "BigDecimal":
-                return JMockData.mock(BigDecimal.class);
-            case "BigInteger":
-                return JMockData.mock(BigInteger.class);
-            default:
-                return NORMAL_TYPES.get(fieldTypeName);
+        return null;
+    }
+
+    @Nullable
+    private static Object resolveInitArrayValue(Class<?> javaType, PsiExpression[] psiExpressions) {
+        int length = psiExpressions.length;
+
+        if (length == 0) {
+            return getNormalDefaultValue(javaType);
+        } else if (length == 1) {
+            return resolveInitValue(javaType, psiExpressions[0]);
         }
+
+        Object array = Array.newInstance(javaType, length);
+        for (int i = 0; i < length; i++) {
+            try {
+                Array.set(array, i, resolveInitValue(javaType, psiExpressions[i]));
+            } catch (IllegalArgumentException e) {
+                if (i == 1) {
+                    return Array.get(array, 0);
+                }
+
+                Object newArray = Array.newInstance(javaType, i);
+
+                //noinspection SuspiciousSystemArraycopy
+                System.arraycopy(array, 0, newArray, 0, i);
+
+                return newArray;
+            }
+        }
+
+        return array;
+    }
+
+    /**
+     * 获取对象类型mock值
+     *
+     * @param field    字段
+     * @param typeName 类型名称
+     * @param javaType java类型
+     * @return data
+     */
+    @Nullable
+    public static Object getNormalTypeValue(PsiField field, String typeName, Class<?> javaType) {
+        if (ParamsManager.get().isDataType(DataType.DEFAULT_VALUE)) {
+            PsiExpression initExpression = field.getInitializer();
+            if (initExpression != null) {
+                return resolveInitValue(javaType, initExpression);
+            }
+
+            return getNormalDefaultValue(javaType);
+        } else if (ParamsManager.get().isDataType(DataType.WRITE_TYPE)) {
+            return typeName;
+        }
+
+        return JMockData.mock(javaType);
+    }
+
+    private static Object getNormalDefaultValue(Class<?> javaType) {
+        if (javaType == Object.class) {
+            return new Object();
+        } else if (javaType == Boolean.class) {
+            return false;
+        } else if (javaType == Character.class) {
+            return 'a';
+        } else if (javaType == Byte.class) {
+            return (byte) 0;
+        } else if (javaType == Short.class) {
+            return (short) 0;
+        } else if (javaType == Integer.class) {
+            return 0;
+        } else if (javaType == Long.class) {
+            return 0L;
+        } else if (javaType == Float.class) {
+            return 0F;
+        } else if (javaType == Double.class) {
+            return 0D;
+        } else if (javaType == String.class) {
+            return "";
+        } else if (javaType == BigDecimal.class) {
+            return 0D;
+        } else if (javaType == BigInteger.class) {
+            return 0L;
+        } else if (javaType == Date.class) {
+            return new SimpleDateFormat(PATTERN).format(new Date());
+        } else if (javaType == Timestamp.class) {
+            return System.currentTimeMillis();
+        } else if (javaType == LocalDate.class) {
+            return LocalDate.now().toString();
+        } else if (javaType == LocalTime.class) {
+            return LocalTime.now().toString();
+        } else if (javaType == LocalDateTime.class) {
+            return LocalDateTime.now().toString();
+        }
+
+        return null;
     }
 
     /**
      * 获取基本类型mock值
      *
-     * @param type 类型
+     * @param field    字段
+     * @param psiType  psi类型
+     * @param javaType java类型
      * @return data
      */
-    public static Object getPrimitiveValue(PsiField field, PsiType type) {
+    @Nullable
+    public static Object getPrimitiveValue(PsiField field, PsiType psiType, Class<?> javaType) {
         if (ParamsManager.get().isDataType(DataType.DEFAULT_VALUE)) {
             PsiExpression initExpression = field.getInitializer();
-            if (initExpression instanceof PsiLiteralExpression) {
-                return ((PsiLiteralExpression) initExpression).getValue();
+            if (initExpression != null) {
+                return resolveInitValue(javaType, initExpression);
             }
 
-            return PsiTypesUtil.getDefaultValue(type);
+            return PsiTypesUtil.getDefaultValue(psiType);
         } else if (ParamsManager.get().isDataType(DataType.WRITE_TYPE)) {
-            return type.getCanonicalText();
+            return psiType.getCanonicalText();
         }
 
-        switch (type.getCanonicalText()) {
-            case "boolean":
-                return JMockData.mock(boolean.class);
-            case "char":
-                return JMockData.mock(char.class);
-            case "byte":
-                return JMockData.mock(byte.class);
-            case "short":
-                return JMockData.mock(short.class);
-            case "int":
-                return JMockData.mock(int.class);
-            case "long":
-                return JMockData.mock(long.class);
-            case "float":
-                return JMockData.mock(float.class);
-            case "double":
-                return JMockData.mock(double.class);
-            default:
-                return PsiTypesUtil.getDefaultValue(type);
+        if (javaType == void.class) {
+            return PsiTypesUtil.getDefaultValue(psiType);
         }
+
+        return JMockData.mock(javaType);
     }
 }

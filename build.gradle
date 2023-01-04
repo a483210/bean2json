@@ -1,7 +1,9 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.intellij' version '1.8.0'
+    id 'org.jetbrains.intellij' version '1.9.0'
 }
+
+apply from: rootProject.file('gradle/local.gradle')
 
 group 'com.xy.bean2json'
 version '1.0.0'
@@ -12,6 +14,7 @@ repositories {
 
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
+    testImplementation 'org.assertj:assertj-core:3.23.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
@@ -20,10 +23,10 @@ dependencies {
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
     version = '2021.1'
-    plugins = ['java', 'org.jetbrains.kotlin']
+    plugins = ['com.intellij.java', 'org.jetbrains.kotlin']
     updateSinceUntilBuild = false
 }
 
 test {
-    useJUnitPlatform()
+    systemProperty "idea.home.path", rootProject.ext.ideaSourceDir
 }
