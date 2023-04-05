@@ -20,7 +20,7 @@ public enum DataType {
     /**
      * mock数据
      */
-    MOCK_DATA(0);
+    MOCK_DATA(2);
 
     private final int type;
 

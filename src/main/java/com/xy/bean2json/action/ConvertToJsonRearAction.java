@@ -26,5 +26,4 @@ public class ConvertToJsonRearAction extends BaseAction {
 
         return psiFile.getName();
     }
-
 }

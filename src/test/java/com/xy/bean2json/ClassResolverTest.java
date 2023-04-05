@@ -10,6 +10,8 @@ import com.xy.bean2json.utils.PluginUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+
 /**
  * ClassResolverTest
  *
@@ -43,6 +45,9 @@ public class ClassResolverTest extends LightJavaCodeInsightFixtureTestCase {
 
         String json = ClassResolver.toJsonField(getFile(), selectedType);
 
+        assertThat(json)
+                .isNotNull();
+
         System.out.println(json);
     }
 
@@ -52,6 +57,9 @@ public class ClassResolverTest extends LightJavaCodeInsightFixtureTestCase {
 
         String json = ClassResolver.toJsonComment(getFile(), selectedType);
 
+        assertThat(json)
+                .isNotNull();
+
         System.out.println(json);
     }
 
@@ -60,6 +68,9 @@ public class ClassResolverTest extends LightJavaCodeInsightFixtureTestCase {
         PsiType selectedType = PluginUtils.parsePsiFile(getFile());
 
         String json = ClassResolver.toJsonRear(getFile(), selectedType);
+
+        assertThat(json)
+                .isNotNull();
 
         System.out.println(json);
     }

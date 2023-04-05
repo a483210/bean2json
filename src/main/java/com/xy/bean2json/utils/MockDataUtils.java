@@ -1,8 +1,8 @@
 package com.xy.bean2json.utils;
 
-import com.github.jsonzou.jmockdata.JMockData;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.xy.bean2json.manager.FakerManager;
 import com.xy.bean2json.manager.ParamsManager;
 import com.xy.bean2json.type.DataType;
 import org.jetbrains.annotations.Nullable;
@@ -117,7 +117,7 @@ public final class MockDataUtils {
             return typeName;
         }
 
-        return JMockData.mock(javaType);
+        return FakerManager.get().mockFaker(field.getName(), javaType);
     }
 
     private static Object getNormalDefaultValue(Class<?> javaType) {
@@ -185,6 +185,6 @@ public final class MockDataUtils {
             return PsiTypesUtil.getDefaultValue(psiType);
         }
 
-        return JMockData.mock(javaType);
+        return FakerManager.get().mockFaker(field.getName(), javaType);
     }
 }
