@@ -10,17 +10,17 @@ import com.xy.bean2json.utils.JsonUtils;
 import com.xy.bean2json.utils.PluginUtils;
 
 /**
- * ConvertToJsonRearAction
+ * ConvertToJsonReadableAction
  *
  * @author Created by gold on 2020/3/4 16:25
  */
-public class ConvertToJsonRearAction extends BaseAction {
+public class ConvertToJsonReadableAction extends BaseAction {
 
     @Override
     protected String actionPerformed(AnActionEvent e, Editor editor, PsiFile psiFile) {
         PsiType selectedType = PluginUtils.parsePsiFile(psiFile);
 
-        String json = ClassResolver.toJsonRear(psiFile, selectedType);
+        String json = ClassResolver.toJsonReadable(psiFile, selectedType);
 
         JsonUtils.copyToClipboard(json);
 

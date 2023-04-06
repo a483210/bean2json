@@ -13,9 +13,9 @@ public enum DataType {
     DEFAULT_VALUE(0),
 
     /**
-     * 类型
+     * 类型名称
      */
-    WRITE_TYPE(1),
+    TYPE_NAME(1),
 
     /**
      * mock数据

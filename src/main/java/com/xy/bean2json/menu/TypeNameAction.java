@@ -7,19 +7,19 @@ import com.xy.bean2json.type.DataType;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * WriteTypeAction
+ * TypeNameAction
  *
  * @author Created by gold on 2020/12/11 10:58
  */
-public class WriteTypeAction extends ToggleAction {
+public class TypeNameAction extends ToggleAction {
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-        return ParamsManager.get().isDataType(DataType.WRITE_TYPE);
+        return ParamsManager.get().isDataType(DataType.TYPE_NAME);
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        ParamsManager.get().setDataType(DataType.WRITE_TYPE);
+        ParamsManager.get().setDataType(DataType.TYPE_NAME);
     }
 }

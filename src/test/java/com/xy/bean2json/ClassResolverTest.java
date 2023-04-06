@@ -64,10 +64,10 @@ public class ClassResolverTest extends LightJavaCodeInsightFixtureTestCase {
     }
 
     @Test
-    public void testJsonRear() {
+    public void testJsonReadable() {
         PsiType selectedType = PluginUtils.parsePsiFile(getFile());
 
-        String json = ClassResolver.toJsonRear(getFile(), selectedType);
+        String json = ClassResolver.toJsonReadable(getFile(), selectedType);
 
         assertThat(json)
                 .isNotNull();

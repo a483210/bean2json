@@ -36,12 +36,6 @@ public final class ClassResolver {
         return toJsonField(resolveClass(psiFile, psiType));
     }
 
-    /**
-     * 解析为json
-     *
-     * @param fields 已解析过的包装
-     * @return json
-     */
     private static String toJsonField(Map<String, FieldAttribute> fields) {
         Map<String, Object> map = toMap(fields);
 
@@ -97,12 +91,6 @@ public final class ClassResolver {
         return toJsonComment(resolveComment(psiFile, psiType));
     }
 
-    /**
-     * 解析为json
-     *
-     * @param comments 已解析过的包装
-     * @return json
-     */
     private static String toJsonComment(Map<String, CommentAttribute> comments) {
         Map<String, Object> map = toCommentMap(comments);
 
@@ -127,7 +115,7 @@ public final class ClassResolver {
             case TEXT:
                 String value = (String) attribute.getValue();
                 if (StringUtils.isEmpty(value)) {
-                    return null;
+                    return "";
                 }
 
                 return value;
@@ -145,7 +133,7 @@ public final class ClassResolver {
      * @param psiType type
      * @return json
      */
-    public static String toJsonRear(PsiFile psiFile, PsiType psiType) {
+    public static String toJsonReadable(PsiFile psiFile, PsiType psiType) {
         ClassWrapper wrapper = resolve(psiFile, psiType);
         if (wrapper == null) {
             return "{}";

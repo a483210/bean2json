@@ -39,10 +39,16 @@ public final class PluginUtils {
         String className = psiFile.getName();
         String shortClassName = className.substring(0, className.lastIndexOf("."));
 
-        PsiClass[] psiClasses = PsiShortNamesCache.getInstance(project)
-                .getClassesByName(shortClassName, GlobalSearchScope.allScope(project));
+        PsiClass[] psiClasses;
+        if (psiFile instanceof PsiJavaFile) {
+            psiClasses = ((PsiJavaFile) psiFile).getClasses();
+        } else {
+            psiClasses = PsiShortNamesCache.getInstance(project)
+                    .getClassesByName(shortClassName, GlobalSearchScope.allScope(project));
+        }
+
         if (psiClasses.length == 0) {
-            throw new IllegalArgumentException("not found class");
+            throw new IllegalArgumentException("not found class " + shortClassName);
         }
 
         //todo 不能直接用0，如果命名有重复可能触发bug

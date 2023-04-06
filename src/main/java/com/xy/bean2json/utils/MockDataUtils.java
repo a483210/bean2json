@@ -113,7 +113,7 @@ public final class MockDataUtils {
             }
 
             return getNormalDefaultValue(javaType);
-        } else if (ParamsManager.get().isDataType(DataType.WRITE_TYPE)) {
+        } else if (ParamsManager.get().isDataType(DataType.TYPE_NAME)) {
             return typeName;
         }
 
@@ -177,7 +177,7 @@ public final class MockDataUtils {
             }
 
             return PsiTypesUtil.getDefaultValue(psiType);
-        } else if (ParamsManager.get().isDataType(DataType.WRITE_TYPE)) {
+        } else if (ParamsManager.get().isDataType(DataType.TYPE_NAME)) {
             return psiType.getCanonicalText();
         }
 

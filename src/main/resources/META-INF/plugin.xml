@@ -30,8 +30,8 @@
             <action class="com.xy.bean2json.action.ConvertToJsonAction" id="toLess" text="ToLess"/>
             <action class="com.xy.bean2json.action.ConvertToJsonCommentAction" id="toComment"
                     text="ToComment"/>
-            <action class="com.xy.bean2json.action.ConvertToJsonRearAction" id="toRear"
-                    text="ToRear">
+            <action class="com.xy.bean2json.action.ConvertToJsonReadableAction" id="toReadable"
+                    text="ToReadable">
                 <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt 2"/>
             </action>
         </group>
@@ -40,7 +40,7 @@
                icon="/icons/convert.svg">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <action class="com.xy.bean2json.menu.DefaultAction" id="com.xy.bean2json.DefaultValue" text="DefaultValue"/>
-            <action class="com.xy.bean2json.menu.WriteTypeAction" id="com.xy.bean2json.WriteType" text="TypeValue"/>
+            <action class="com.xy.bean2json.menu.TypeNameAction" id="com.xy.bean2json.TypeName" text="TypeName"/>
             <action class="com.xy.bean2json.menu.MockDataAction" id="com.xy.bean2json.MockData" text="MockData"/>
         </group>
     </actions>
