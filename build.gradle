@@ -1,6 +1,8 @@
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+
 plugins {
     id 'java'
-    id 'org.jetbrains.intellij' version '1.9.0'
+    id 'org.jetbrains.intellij.platform' version '2.4.0'
 }
 
 apply from: rootProject.file('gradle/local.gradle')
@@ -10,6 +12,10 @@ version '1.0.0'
 
 repositories {
     mavenCentral()
+
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 dependencies {
@@ -17,18 +23,17 @@ dependencies {
     implementation 'net.datafaker:datafaker:1.8.1'
     implementation 'org.ahocorasick:ahocorasick:0.6.3'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
     testImplementation 'org.assertj:assertj-core:3.23.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
+    testImplementation 'junit:junit:4.13.2'
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-}
 
-// See https://github.com/JetBrains/gradle-intellij-plugin/
-intellij {
-    version = '2021.1'
-    plugins = ['com.intellij.java', 'org.jetbrains.kotlin']
-    updateSinceUntilBuild = false
+    intellijPlatform {
+        intellijIdeaCommunity '2024.3'
+        bundledPlugins 'com.intellij.java', 'org.jetbrains.kotlin'
+
+        testFramework TestFrameworkType.Platform.INSTANCE
+    }
 }
 
 test {

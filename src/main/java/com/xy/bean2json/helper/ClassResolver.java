@@ -39,7 +39,7 @@ public final class ClassResolver {
     private static String toJsonField(Map<String, FieldAttribute> fields) {
         Map<String, Object> map = toMap(fields);
 
-        return JsonUtils.toJson(map);
+        return JsonUtils.toJsonPretty(map);
     }
 
     private static Map<String, Object> toMap(Map<String, FieldAttribute> fields) {
@@ -94,7 +94,7 @@ public final class ClassResolver {
     private static String toJsonComment(Map<String, CommentAttribute> comments) {
         Map<String, Object> map = toCommentMap(comments);
 
-        return JsonUtils.toJson(map);
+        return JsonUtils.toJsonPretty(map);
     }
 
     private static Map<String, Object> toCommentMap(Map<String, CommentAttribute> comments) {

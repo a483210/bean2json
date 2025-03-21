@@ -1,14 +1,12 @@
 package com.xy.bean2json;
 
 import com.intellij.psi.PsiType;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.xy.bean2json.helper.ClassResolver;
 import com.xy.bean2json.manager.ParamsManager;
 import com.xy.bean2json.type.DataType;
 import com.xy.bean2json.utils.PluginUtils;
-import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
@@ -18,16 +16,11 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
  * @author Created by gold on 2023/1/4 15:04
  * @since 1.0.0
  */
-public class ClassResolverTest extends LightJavaCodeInsightFixtureTestCase {
+public class ClassResolverTest extends BasePlatformTestCase {
 
     @Override
     protected String getTestDataPath() {
         return "src/test/testData";
-    }
-
-    @Override
-    protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-        return JAVA_11;
     }
 
     @Override
@@ -41,9 +34,9 @@ public class ClassResolverTest extends LightJavaCodeInsightFixtureTestCase {
 
     @Test
     public void testJsonField() {
-        PsiType selectedType = PluginUtils.parsePsiFile(getFile());
+        PsiType selectedType = PluginUtils.parsePsiFile(myFixture.getFile());
 
-        String json = ClassResolver.toJsonField(getFile(), selectedType);
+        String json = ClassResolver.toJsonField(myFixture.getFile(), selectedType);
 
         assertThat(json)
                 .isNotNull();
@@ -53,9 +46,9 @@ public class ClassResolverTest extends LightJavaCodeInsightFixtureTestCase {
 
     @Test
     public void testJsonComment() {
-        PsiType selectedType = PluginUtils.parsePsiFile(getFile());
+        PsiType selectedType = PluginUtils.parsePsiFile(myFixture.getFile());
 
-        String json = ClassResolver.toJsonComment(getFile(), selectedType);
+        String json = ClassResolver.toJsonComment(myFixture.getFile(), selectedType);
 
         assertThat(json)
                 .isNotNull();
@@ -65,9 +58,9 @@ public class ClassResolverTest extends LightJavaCodeInsightFixtureTestCase {
 
     @Test
     public void testJsonReadable() {
-        PsiType selectedType = PluginUtils.parsePsiFile(getFile());
+        PsiType selectedType = PluginUtils.parsePsiFile(myFixture.getFile());
 
-        String json = ClassResolver.toJsonReadable(getFile(), selectedType);
+        String json = ClassResolver.toJsonReadable(myFixture.getFile(), selectedType);
 
         assertThat(json)
                 .isNotNull();

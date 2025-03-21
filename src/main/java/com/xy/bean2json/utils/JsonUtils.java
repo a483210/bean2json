@@ -17,7 +17,8 @@ public final class JsonUtils {
     private JsonUtils() {
     }
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    public static final Gson GSON = new GsonBuilder().create();
+    public static final Gson GSON_PRETTY = new GsonBuilder().setPrettyPrinting().create();
 
     /**
      * toJson
@@ -27,6 +28,16 @@ public final class JsonUtils {
      */
     public static String toJson(Object obj) {
         return GSON.toJson(obj);
+    }
+
+    /**
+     * toJson
+     *
+     * @param obj 对象
+     * @return json
+     */
+    public static String toJsonPretty(Object obj) {
+        return GSON_PRETTY.toJson(obj);
     }
 
     /**

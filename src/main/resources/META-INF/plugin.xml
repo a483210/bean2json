@@ -15,7 +15,7 @@
          <li>1.0.0 - First revision.</li>
     ]]>
     </change-notes>
-    <idea-version since-build="211"/>
+    <idea-version since-build="232"/>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
@@ -34,6 +34,8 @@
                     text="ToReadable">
                 <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt 2"/>
             </action>
+            <separator/>
+            <!--            <action class="com.xy.bean2json.action.ChatGPTJsonAction" id="toChatGPTJson" text="ToChatGPTJson"/>-->
         </group>
 
         <group id="com.xy.bean2json.Bean2JsonMenu" text="Bean2Json" popup="true"

@@ -1,8 +1,7 @@
 package com.xy.bean2json;
 
 import com.intellij.psi.PsiType;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.xy.bean2json.helper.ClassResolver;
 import com.xy.bean2json.manager.ParamsManager;
 import com.xy.bean2json.model.ClassWrapper;
@@ -13,8 +12,7 @@ import com.xy.bean2json.model.FieldAttribute.FieldType;
 import com.xy.bean2json.model.MapTuple;
 import com.xy.bean2json.type.DataType;
 import com.xy.bean2json.utils.PluginUtils;
-import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -35,16 +33,11 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
  * @author Created by gold on 2022/8/25 13:26
  * @since 1.0.0
  */
-public class JavaConverterTest extends LightJavaCodeInsightFixtureTestCase {
+public class JavaConverterTest extends BasePlatformTestCase {
 
     @Override
     protected String getTestDataPath() {
         return "src/test/testData";
-    }
-
-    @Override
-    protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-        return JAVA_11;
     }
 
     @Override
@@ -58,9 +51,9 @@ public class JavaConverterTest extends LightJavaCodeInsightFixtureTestCase {
 
     @Test
     public void testParsingTestData() {
-        PsiType selectedType = PluginUtils.parsePsiFile(getFile());
+        PsiType selectedType = PluginUtils.parsePsiFile(myFixture.getFile());
 
-        ClassWrapper wrapper = ClassResolver.resolve(getFile(), selectedType);
+        ClassWrapper wrapper = ClassResolver.resolve(myFixture.getFile(), selectedType);
 
         Map<String, FieldAttribute> fields = wrapper.getFields();
 
@@ -187,9 +180,9 @@ public class JavaConverterTest extends LightJavaCodeInsightFixtureTestCase {
 
     @Test
     public void testParsingTestDataByComment() {
-        PsiType selectedType = PluginUtils.parsePsiFile(getFile());
+        PsiType selectedType = PluginUtils.parsePsiFile(myFixture.getFile());
 
-        ClassWrapper wrapper = ClassResolver.resolve(getFile(), selectedType);
+        ClassWrapper wrapper = ClassResolver.resolve(myFixture.getFile(), selectedType);
 
         Map<String, CommentAttribute> comments = wrapper.getComments();
 
